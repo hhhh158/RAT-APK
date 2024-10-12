@@ -1,0 +1,71 @@
+body{
+  background: white;
+  margin: 0;
+  padding: 0;
+  
+  text-align: center;
+  width: device-width;
+
+  place-items: center;
+  
+}
+.head{
+  background-image: url('slider-bg.jpg');
+  background-size: cover;
+  background-position: center;
+  width: 95%;
+  height: auto;
+  padding: 10px 10px;
+  border-radius: 0px 0px 16px 16px;
+  color: white;
+}
+button{
+  width:100px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid white;
+  background: black;
+  color: white;
+  transition: 1.5s;
+}
+.form{
+  width:90%;
+  height: 300px;
+  border: 2px solid black;
+  border-radius: 20px;
+  margin-top: 40px;
+  background-image: url('client.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: white;
+}
+
+input{
+  background: black;
+  color: white;
+  border-radius: 7px;
+  width:90%;
+  height: 35px;
+  border: 1px solid white;
+  margin: 5px;
+  padding: 5px;
+  transition: 1.5s;
+}
+input::placeholder{
+  color:white ;
+}
+input:hover{
+  background: white;
+  color: black;
+  border: 1px solid black;
+}
+input:hover::placeholder{
+  color: black;
+  
+}
+button:hover{
+  background: white;
+  color:black;
+  border: 1px solid #1b61f8;
+}
