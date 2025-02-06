@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Bot</title>
+</head>
+<body>
+    <h1>Telegram Bot</h1>
+
+    <!-- Input and buttons for the user -->
+    <input type="text" id="userMessage" placeholder="Type your message">
+    <button onclick="sendMessage()">Send Message</button>
+    <button onclick="checkPendingUsers()">Check Pending Users</button>
+
+    <p id="response"></p>
+
+    <script>
+        const botToken = '7522492960:AAFJk8Crrjl3_WqXg4V2JGri_nMJp9I5rXA';  // Replace with your bot token
+        const adminGroupId = '-1001770617195'; // Replace with the admin group ID
+        const apiUrl = `https://api.telegram.org/bot${botToken}/`;
+
+        // Function to send message to the bot
+        function sendMessage() {
+            const userMessage = document.getElementById('userMessage').value;
+            const chatId = 'YOUR_CHAT_ID';  // Replace with the chat ID where messages are sent
+
+            if (userMessage.trim() === '') {
+                alert('Please type a message!');
+                return;
+            }
+
+            // Send message to Telegram
+            const url = new URL('sendMessage', apiUrl);
+            url.searchParams.append('chat_id', chatId);
+            url.searchParams.append('text', userMessage);
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ok) {
+                        document.getElementById('response').innerText = 'Message sent to Telegram Bot!';
+                    } else {
+                        document.getElementById('response').innerText = 'Error sending message';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('response').innerText = 'Error sending message';
+                });
+        }
+
+        // 📌 Verification System
+        function sendVerificationMessage(chatId, username) {
+            const msg = `👋 Welcome ${username}!\n\n⚠️ Click below to verify.`;
+            const keyboard = { inline_keyboard: [[{ text: "✅ Verify Me", callback_data: "verify" }]] };
+            const url = new URL('sendMessage', apiUrl);
+            url.searchParams.append('chat_id', chatId);
+            url.searchParams.append('text', msg);
+            url.searchParams.append('reply_markup', JSON.stringify(keyboard));
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Verification message sent');
+                });
+        }
+
+        // ✅ Handle Verification
+        function handleVerification(callbackQuery, chatId) {
+            const callbackData = callbackQuery.data;
+            const callbackUserId = callbackQuery.from.id;
+
+            if (callbackData === 'verify') {
+                const url = new URL('restrictChatMember', apiUrl);
+                url.searchParams.append('chat_id', chatId);
+                url.searchParams.append('user_id', callbackUserId);
+                url.searchParams.append('can_send_messages', 'true');
+
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        sendMessageToChat(chatId, `✅ Verified!`);
+                    });
+            }
+        }
+
+        // 🚫 Auto-kick Unverified Users (after 5 minutes)
+        function checkPendingUsers() {
+            const url = new URL('getUpdates', apiUrl);
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const updates = data.result;
+                    updates.forEach(update => {
+                        const message = update.message;
+                        const chatId = message.chat.id;
+                        const userId = message.from.id;
+                        const username = message.from.first_name;
+                        const text = message.text;
+
+                        // Auto-kick if not verified after 5 minutes (Example)
+                        if (message.date && (Date.now() / 1000 - message.date) > 300) { // 5 minutes
+                            const kickUrl = new URL('kickChatMember', apiUrl);
+                            kickUrl.searchParams.append('chat_id', chatId);
+                            kickUrl.searchParams.append('user_id', userId);
+                            fetch(kickUrl);
+                            console.log(`User ${username} kicked for being unverified.`);
+                        }
+
+                        // 🚫 Banned Words Filter
+                        const bannedWords = ['badword1', 'badword2'];  // Replace with your banned words
+                        bannedWords.forEach(word => {
+                            if (text && text.toLowerCase().includes(word)) {
+                                const deleteUrl = new URL('deleteMessage', apiUrl);
+                                deleteUrl.searchParams.append('chat_id', chatId);
+                                deleteUrl.searchParams.append('message_id', message.message_id);
+                                fetch(deleteUrl);
+
+                                // Send alert to admin group
+                                sendMessage(adminGroupId, `🚨 Alert: @${username} used a banned word.`);
+                            }
+                        });
+
+                        // XP System (Using local storage for simplicity)
+                        handleXPSystem(userId, username);
+                    });
+                })
+                .catch(err => {
+                    console.error(err);
+                });
+        }
+
+        // 🏆 XP System
+        function handleXPSystem(userId, username) {
+            let users = JSON.parse(localStorage.getItem('users')) || {};
+
+            if (!users[userId]) {
+                users[userId] = { xp: 10, level: 1 };
+            } else {
+                users[userId].xp += 10;
+                if (users[userId].xp >= users[userId].level * 100) {
+                    users[userId].level += 1;
+                }
+            }
+
+            localStorage.setItem('users', JSON.stringify(users));
+        }
+
+        // Function to send a message to a chat
+        function sendMessageToChat(chatId, text) {
+            const url = new URL('sendMessage', apiUrl);
+            url.searchParams.append('chat_id', chatId);
+            url.searchParams.append('text', text);
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                });
+        }
+    </script>
+</body>
+</html>
